@@ -13,4 +13,4 @@ namespace ETicaretAPI.Application.DTOs.User
         public string Message { get; set; }
     }
 }
-}
+

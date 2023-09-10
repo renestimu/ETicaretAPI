@@ -8,6 +8,8 @@ using ETicaretAPI.Domain.Entities.Identity;
 using Google.Apis.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.IIS.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -26,13 +28,15 @@ namespace ETicaretAPI.Persistence.Services
         readonly UserManager<Domain.Entities.Identity.AppUser> _userManager;
         readonly ITokenHandler _tokenHandler;
         readonly SignInManager<Domain.Entities.Identity.AppUser> _signInManager;
-        public AuthService(IHttpClientFactory httpClient, IConfiguration configuration, UserManager<Domain.Entities.Identity.AppUser> userManager, ITokenHandler tokenHandler, SignInManager<AppUser> signInManager)
+        readonly IUserService _userService;
+        public AuthService(IHttpClientFactory httpClient, IConfiguration configuration, UserManager<Domain.Entities.Identity.AppUser> userManager, ITokenHandler tokenHandler, SignInManager<AppUser> signInManager, IUserService userService)
         {
             _httpClient = httpClient.CreateClient();
             _configuration = configuration;
             _userManager = userManager;
             _tokenHandler = tokenHandler;
             _signInManager = signInManager;
+            _userService = userService;
         }
 
         async Task<Token> CreateUserExternalAsync(AppUser appUser,string email,string name,UserLoginInfo info,int accessTokenLifeTime)
@@ -64,7 +68,8 @@ namespace ETicaretAPI.Persistence.Services
                 await _userManager.AddLoginAsync(appUser, info);
 
 
-                Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime);
+                Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime,appUser);
+                await _userService.UpdateRefreshToken(token.RefreshToken, appUser, token.Expiration, 15);
                 return token;
             }
 
@@ -129,10 +134,24 @@ namespace ETicaretAPI.Persistence.Services
             SignInResult signInResult = await _signInManager.CheckPasswordSignInAsync(user, usernameOrEmail, false);
             if (signInResult.Succeeded)
             {
-                Token token = _tokenHandler.CreateAccessToken(10);
+                Token token = _tokenHandler.CreateAccessToken(10,user);
+                await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 15);
                 return token;
             }
             throw new AuthenticationErrorException();
+        }
+
+        public async Task<Token> RefreshTokenLoginAsync(string refreshToken)
+        {
+             Domain.Entities.Identity.AppUser? user=await _userManager.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
+            if(user != null && user?.ReRefreshTokenEndDate>DateTime.UtcNow)
+            {
+                Token token= _tokenHandler.CreateAccessToken(15, user);
+               await _userService.UpdateRefreshToken(token.RefreshToken,user, token.Expiration, 15);
+                return token;
+            }else
+                throw new NotFoundUserException();
+
         }
     }
 }
