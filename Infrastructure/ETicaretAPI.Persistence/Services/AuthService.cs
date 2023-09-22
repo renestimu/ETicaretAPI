@@ -69,7 +69,7 @@ namespace ETicaretAPI.Persistence.Services
 
 
                 Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime,appUser);
-                await _userService.UpdateRefreshToken(token.RefreshToken, appUser, token.Expiration, 15);
+                await _userService.UpdateRefreshToken(token.RefreshToken, appUser, token.Expiration, 900);
                 return token;
             }
 
@@ -131,11 +131,11 @@ namespace ETicaretAPI.Persistence.Services
                 throw new NotFoundUserException();
 
 
-            SignInResult signInResult = await _signInManager.CheckPasswordSignInAsync(user, usernameOrEmail, false);
+            SignInResult signInResult = await _signInManager.CheckPasswordSignInAsync(user, password, false);
             if (signInResult.Succeeded)
             {
-                Token token = _tokenHandler.CreateAccessToken(10,user);
-                await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 15);
+                Token token = _tokenHandler.CreateAccessToken(900,user);
+                await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 300);
                 return token;
             }
             throw new AuthenticationErrorException();
@@ -146,8 +146,8 @@ namespace ETicaretAPI.Persistence.Services
              Domain.Entities.Identity.AppUser? user=await _userManager.Users.FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
             if(user != null && user?.ReRefreshTokenEndDate>DateTime.UtcNow)
             {
-                Token token= _tokenHandler.CreateAccessToken(15, user);
-               await _userService.UpdateRefreshToken(token.RefreshToken,user, token.Expiration, 15);
+                Token token= _tokenHandler.CreateAccessToken(900, user);
+               await _userService.UpdateRefreshToken(token.RefreshToken,user, token.Expiration, 300);
                 return token;
             }else
                 throw new NotFoundUserException();
