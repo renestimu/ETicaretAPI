@@ -19,13 +19,13 @@ namespace ETicaretAPI.Persistence.Services
     {
         readonly IHttpContextAccessor _contextAccessor;
         readonly UserManager<AppUser> _userManager;
-        readonly OrderReadRepository _orderReadRepository;
+        readonly IOrderReadRepository _orderReadRepository;
         readonly IBasketWriteRepository _basketWriteRepository;
         readonly IBasketReadRepository _basketReadRepository;
         readonly IBasketItemWriteRepository _basketItemWriteRepository;
         readonly IBasketItemReadRepository _basketItemReadRepository;
 
-        public BasketService(IHttpContextAccessor contextAccessor, UserManager<AppUser> userManager, OrderReadRepository orderReadRepository, IBasketWriteRepository basketWriteRepository, IBasketItemWriteRepository basketItemWriteRepository, IBasketItemReadRepository basketItemReadRepository, IBasketReadRepository basketReadRepository)
+        public BasketService(IHttpContextAccessor contextAccessor, UserManager<AppUser> userManager, IBasketWriteRepository basketWriteRepository, IBasketItemWriteRepository basketItemWriteRepository, IBasketItemReadRepository basketItemReadRepository, IBasketReadRepository basketReadRepository, IOrderReadRepository orderReadRepository)
         {
             _contextAccessor = contextAccessor;
             _userManager = userManager;
@@ -34,6 +34,7 @@ namespace ETicaretAPI.Persistence.Services
             _basketItemWriteRepository = basketItemWriteRepository;
             _basketItemReadRepository = basketItemReadRepository;
             _basketReadRepository = basketReadRepository;
+            _orderReadRepository = orderReadRepository;
         }
 
         private async Task<Basket?> ContextUser()
