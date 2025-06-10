@@ -71,6 +71,7 @@ namespace ETicaretAPI.Persistence.Services
                 TotalCount = await query.CountAsync(),
                 Orders = await data.Select(o => new
                 {
+                    Id=o.Id,
                     OrderCode = o.OrderCode,
                     CreateDate = o.CreateDate,
                     UserName = o.Basket.User.UserName,
@@ -79,6 +80,31 @@ namespace ETicaretAPI.Persistence.Services
                 }).ToListAsync()
             };
 
+        }
+
+        public async Task<SingleOrder> GetOrderByIdAsync(string id)
+        {
+            var data = await _orderReadRepository.Table.Include(o => o.Basket)
+                .ThenInclude(b => b.BasketItems)
+                .ThenInclude(bi => bi.Product)
+                .FirstOrDefaultAsync(o => o.Id == Guid.Parse(id));
+
+            return new()
+            {
+                Id = data.Id.ToString(),
+                OrderCode = data.OrderCode,
+                CreateDate = data.CreateDate,
+                Description = data.Description,
+                Address = data.Address,               
+                BasketItems = data.Basket.BasketItems.Select(bi => new
+                {
+                    
+                    Name = bi.Product.Name,
+                    Quantity = bi.Quantity,
+                    Price = bi.Product.Price
+                }).ToList()
+
+            };
         }
     }
 }
