@@ -20,5 +20,7 @@ namespace ETicaretAPI.Domain.Entities
 
         //public ICollection<Product> Products { get; set; }
         //public Customer Customer { get; set; }
+
+        public CompletedOrder CompletedOrder { get; set; }
     }
 }

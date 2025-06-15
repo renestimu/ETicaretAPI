@@ -14,5 +14,6 @@ namespace ETicaretAPI.Application.DTOs.Order
         public string Description { get; set; }
         public DateTime CreateDate { get; set; }
         public string Id { get; set; }
+        public bool Completed { get; set; }
     }
 }
