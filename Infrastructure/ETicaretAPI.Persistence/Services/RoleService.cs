@@ -48,8 +48,15 @@ namespace ETicaretAPI.Persistence.Services
 
         public async Task<(object,int)> GetRolesAsync(int page, int size)
         {
-            var res = _roleManager.Roles.Skip(page * size).Take(size).Select(r => new { r.Id, r.Name }).ToList();
-            return (res, _roleManager.Roles.Count());
+
+            var query = _roleManager.Roles;
+            IQueryable<AppRole> appRoles = null;
+            if (page != -1 && size != -1)
+                appRoles = query.Skip(page * size).Take(size);
+            else
+                appRoles = query;
+
+            return (appRoles.Select(r => new { r.Id, r.Name }), query.Count());
         }
 
         public async Task<bool> UpdateRole(string id, string name)
