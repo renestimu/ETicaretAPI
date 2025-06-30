@@ -6,6 +6,7 @@ using ETicaretAPI.Application.Helpers;
 using ETicaretAPI.Domain.Entities.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,6 +76,54 @@ namespace ETicaretAPI.Persistence.Services
                   await  _userManager.UpdateSecurityStampAsync(appUser);
                 }else
                     throw new PasswordChangeFailedException();
+            }
+        }
+
+        public async Task<(List<ListUser>, int)> GetAllUsersAsync(int page, int size)
+        {
+            var usersQuery = _userManager.Users;
+
+            var userList = await usersQuery
+                .Skip(page * size)
+                .Take(size)
+                .Select(u => new ListUser
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    NameSurname = u.NameSurname,
+                    TwoFactorEnabled = u.TwoFactorEnabled,
+                })
+                .ToListAsync();
+
+            int totalUsersCount = await usersQuery.CountAsync();
+
+            return (userList, totalUsersCount);
+        }
+
+        public async Task AssignRoleToUserAsync(string userId, string[] roles)
+        {
+           AppUser appUser=await _userManager.FindByIdAsync(userId);
+            if (appUser != null)
+            {
+                var currentRoles = await _userManager.GetRolesAsync(appUser);
+                await _userManager.RemoveFromRolesAsync(appUser, currentRoles);
+                await _userManager.AddToRolesAsync(appUser, roles);
+            }
+
+        }
+
+        public async Task<string[]> GetRolesToUserAsync(string userId)
+        {
+            AppUser appUser = await _userManager.FindByIdAsync(userId);
+            if (appUser != null)
+            {
+                var userRoles = await _userManager.GetRolesAsync(appUser);
+                return userRoles.ToArray();
+            }
+            else
+            {
+                return Array.Empty<string>();
             }
         }
     }

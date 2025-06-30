@@ -14,5 +14,8 @@ namespace ETicaretAPI.Application.Abstractions.Services
         Task UpdateRefreshTokenAsync(string refreshToken, Domain.Entities.Identity.AppUser user,DateTime accessTokenDate,int refreshTokenLifeTime);
 
         Task UpdatePasswordAsync(string userId, string resetToken, string newPassword);
+        Task<(List<ListUser>,int)> GetAllUsersAsync(int page,int size);
+        Task AssignRoleToUserAsync(string userId, string[] roles);
+        Task<string[]> GetRolesToUserAsync(string userId);
     }
 }
