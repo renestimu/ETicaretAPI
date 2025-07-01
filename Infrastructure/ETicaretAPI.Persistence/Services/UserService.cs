@@ -3,6 +3,8 @@ using ETicaretAPI.Application.DTOs.User;
 using ETicaretAPI.Application.Exceptions;
 using ETicaretAPI.Application.Features.Commands.AppUser.CreateUser;
 using ETicaretAPI.Application.Helpers;
+using ETicaretAPI.Application.Repositories;
+using ETicaretAPI.Domain.Entities;
 using ETicaretAPI.Domain.Entities.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -18,10 +20,12 @@ namespace ETicaretAPI.Persistence.Services
     public class UserService : IUserService
     {
         readonly UserManager<Domain.Entities.Identity.AppUser> _userManager;
+        readonly IEndPointReadRepository _endPointReadRepository;
 
-        public UserService(UserManager<Domain.Entities.Identity.AppUser> userManager)
+        public UserService(UserManager<Domain.Entities.Identity.AppUser> userManager, IEndPointReadRepository endPointReadRepository)
         {
             _userManager = userManager;
+            _endPointReadRepository = endPointReadRepository;
         }
 
         public async Task<CreateUserResponse> CreateAsync(CreateUser model)
@@ -113,9 +117,12 @@ namespace ETicaretAPI.Persistence.Services
 
         }
 
-        public async Task<string[]> GetRolesToUserAsync(string userId)
+        public async Task<string[]> GetRolesToUserAsync(string userIdOrName)
         {
-            AppUser appUser = await _userManager.FindByIdAsync(userId);
+            AppUser appUser = await _userManager.FindByIdAsync(userIdOrName);
+            if(appUser==null)             {
+                appUser = await _userManager.FindByNameAsync(userIdOrName);
+            }
             if (appUser != null)
             {
                 var userRoles = await _userManager.GetRolesAsync(appUser);
@@ -125,6 +132,27 @@ namespace ETicaretAPI.Persistence.Services
             {
                 return Array.Empty<string>();
             }
+        }
+
+        public async Task<bool> HasRolePermissionToEndPointAsync(string name, string code)
+        {
+           var userRoles=await GetRolesToUserAsync(name);
+           if(!userRoles.Any())
+                { return false; }
+            EndPoint? endPoint= await _endPointReadRepository.Table.Include(e => e.AppRoles).FirstOrDefaultAsync(x=>x.Code==code);
+            if (endPoint == null)
+            {
+                return false;
+            }
+            foreach (var role in userRoles)
+            {
+                if (endPoint.AppRoles.Any(r => r.Name == role))
+                {
+                    return true;
+                }
+            }
+            return false;
+
         }
     }
 }

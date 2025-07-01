@@ -1,5 +1,6 @@
 using ETicaretAPI.API.Configurations.ColumnWrites;
 using ETicaretAPI.API.Extensions;
+using ETicaretAPI.API.Filters;
 using ETicaretAPI.Application;
 using ETicaretAPI.Application.Validators.Products;
 using ETicaretAPI.Infrastructure;
@@ -32,7 +33,7 @@ builder.Services.AddStorage<LocalStorage>();
 //builder.Services.AddStorage<AzureStorage>();
 
 
-builder.Services.AddCors(option => option.AddDefaultPolicy(policy => policy.WithOrigins("http://localhost:4200", "https://localhost:4200", "http://localhost:4401", "https://localhost:4401").AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+builder.Services.AddCors(option => option.AddDefaultPolicy(policy => policy.WithOrigins("http://localhost:5555", "https://localhost:5555", "http://localhost:4200", "https://localhost:4200", "http://localhost:4401", "https://localhost:4401").AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 
 
 Logger logger = new LoggerConfiguration()
@@ -67,8 +68,8 @@ builder.Services.AddHttpLogging(logging =>
 });
 
 
-builder.Services.AddControllers(opt=>opt.Filters.Add<ValidationFilter>())
-    .AddFluentValidation(conf=>conf.RegisterValidatorsFromAssemblyContaining<CreateProductValidor>())
+builder.Services.AddControllers(opt=> { opt.Filters.Add<ValidationFilter>(); opt.Filters.Add<RolePermissionFilter>(); })
+    .AddFluentValidation(conf => conf.RegisterValidatorsFromAssemblyContaining<CreateProductValidor>())
     .ConfigureApiBehaviorOptions(opt=>opt.SuppressModelStateInvalidFilter=true);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
