@@ -1,4 +1,5 @@
 ﻿
+using ETicaretAPI.Application.Abstractions.Services;
 using ETicaretAPI.Application.Abstractions.Storage;
 using ETicaretAPI.Application.Consts;
 using ETicaretAPI.Application.CustomAttributes;
@@ -6,6 +7,7 @@ using ETicaretAPI.Application.Enums;
 using ETicaretAPI.Application.Features.Commands.Product.CreateProduct;
 using ETicaretAPI.Application.Features.Commands.Product.RemoveProduct;
 using ETicaretAPI.Application.Features.Commands.Product.UpdateProduct;
+using ETicaretAPI.Application.Features.Commands.Product.UpdateStockQrCodeToProduct;
 using ETicaretAPI.Application.Features.Commands.ProductImageFile.ChangeShowcaseImage;
 using ETicaretAPI.Application.Features.Commands.ProductImageFile.RemoveProductImage;
 using ETicaretAPI.Application.Features.Commands.ProductImageFile.UploadProductImage;
@@ -34,10 +36,14 @@ namespace ETicaretAPI.API.Controllers
     public class ProductsController : ControllerBase
     {
         readonly IMediator _mediator;
+        readonly ILogger<ProductsController> _logger;
+        readonly IProductService _productService;
 
-        public ProductsController( IMediator mediator)
-        {            
+        public ProductsController(IMediator mediator, ILogger<ProductsController> logger, IProductService productService)
+        {
             _mediator = mediator;
+            _logger = logger;
+            _productService = productService;
         }
 
         [HttpGet]
@@ -47,6 +53,20 @@ namespace ETicaretAPI.API.Controllers
 
             return Ok(response);
         }
+        [HttpGet("qrcode/{productId}")]
+        public async Task<ActionResult> GetQrCode([FromRoute] string productId)
+        {
+            var data = await _productService.QrCodeToProductAsync(productId);
+
+            return File(data,"image/png");
+        }
+        [HttpPut("qrcode")]
+        public async Task<ActionResult> UpdateStockQrCodeToProduct([FromBody] UpdateStockQrCodeToProductCommandRequest request)
+        {
+            UpdateStockQrCodeToProductCommandResponse response = await _mediator.Send(request);
+            return Ok(response);
+        }
+
         [HttpGet("{Id}")]
         public async Task<ActionResult> Get([FromRoute] GetByIdProductQueryRequest request)
         {

@@ -66,6 +66,7 @@ namespace ETicaretAPI.Persistence
             services.AddScoped<IOrderService,OrderService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IAuthorizationEndPointService, AuthorizationEndPointService>();
+            services.AddScoped<IProductService, ProductService>();
 
         }
             
